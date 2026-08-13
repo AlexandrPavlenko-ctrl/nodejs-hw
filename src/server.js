@@ -11,7 +11,7 @@ app.use(
     transport: {
       target: 'pino-pretty',
     },
-  })
+  }),
 );
 
 // Обязательные Middleware из ТЗ
