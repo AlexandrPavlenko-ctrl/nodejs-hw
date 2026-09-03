@@ -2,7 +2,7 @@ import { Joi } from 'celebrate';
 import mongoose from 'mongoose';
 import { TAGS } from '../constants/tags.js';
 
-// функція валідації
+// функція валідації для Mongoose ObjectId
 const isValidObjectId = (value, helpers) => {
   if (!mongoose.Types.ObjectId.isValid(value)) {
     return helpers.message('Невалідний ідентифікатор нотатки (noteId)');
@@ -10,40 +10,43 @@ const isValidObjectId = (value, helpers) => {
   return value;
 };
 
-// GET /notes
+// 1. Строга валідація параметрів запиту
 export const getAllNotesSchema = {
   query: Joi.object({
     page: Joi.number().integer().min(1).default(1),
     perPage: Joi.number().integer().min(5).max(20).default(10),
-    tag: Joi.string().valid(...TAGS).optional().allow('', null),
-    search: Joi.string().allow('', null),
+    // tag: має бути або одним із дійсних тегів, або взагалі відсутнім (без порожніх рядків та null)
+    tag: Joi.string().valid(...TAGS).optional(),
+    // search: має бути рядком, допустимо передавати порожній рядок "" (без null)
+    search: Joi.string().allow('').optional(),
   }),
 };
 
-// GET /notes/:noteId та DELETE /notes/:noteId
+// 2. Схема валідації ідентифікатора
 export const noteIdSchema = {
   params: Joi.object({
     noteId: Joi.string().custom(isValidObjectId).required(),
   }),
 };
 
+// 3. Схема валідації для створення
 export const createNoteSchema = {
   body: Joi.object({
     title: Joi.string().min(1).required().messages({
       'any.required': 'Поле "title" є обовʼязковим',
     }),
     content: Joi.string().allow('').optional(),
-    tag: Joi.string().valid(...TAGS).optional(), // Замість tags тепер одиночний tag
+    tag: Joi.string().valid(...TAGS).optional(),
   }),
 };
 
-// PATCH /notes/:noteId
+// 4. Схема валідації для оновлення
 export const updateNoteSchema = {
   params: noteIdSchema.params,
   body: Joi.object({
     title: Joi.string().min(1).optional(),
     content: Joi.string().allow('').optional(),
-    tag: Joi.string().valid(...TAGS).optional(), // Замість tags тепер одиночний tag
+    tag: Joi.string().valid(...TAGS).optional(),
   })
     .min(1)
     .messages({

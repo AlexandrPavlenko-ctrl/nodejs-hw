@@ -1,10 +1,11 @@
+import 'dotenv/config'; 
 import express from 'express';
 import cors from 'cors';
 import { errors } from 'celebrate';
 import notesRouter from './routes/notesRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
 import notFoundHandler from './middleware/notFoundHandler.js';
-import logger from './middleware/logger.js';
+import { logger } from './middleware/logger.js'; // Використовуємо варіант імпорту з минулого кроку
 import { connectMongoDB } from './db/connectMongoDB.js';
 
 const app = express();
@@ -14,10 +15,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// 2. ЗАСТОСОВУЄМО мідлвар логування до Express-додатку
+// Застосовуємо мідлвар логування
 app.use(logger);
 
-// 3. РЕЄСТРУЄМО роутер БЕЗ префікса шляху
+// Реєструємо роутер без префікса шляху
 app.use(notesRouter);
 
 // Обробка неіснуючих маршрутів (404)
