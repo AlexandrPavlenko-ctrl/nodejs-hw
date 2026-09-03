@@ -1,10 +1,12 @@
 import pinoHttp from 'pino-http';
 import pino from 'pino';
 
-export const loggerMiddleware = pinoHttp({
+const loggerMiddleware = pinoHttp({
   logger: pino({
     transport: {
       target: 'pino-pretty',
     },
   }),
 });
+
+export default loggerMiddleware;
