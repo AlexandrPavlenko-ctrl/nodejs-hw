@@ -1,50 +1,41 @@
-import 'dotenv/config'; // 1. Подключение dotenv для работы с переменными .env
-import express from 'express'; // 1. Подключение express
-import cors from 'cors'; // 1. Подключение cors
-import { connectMongoDB } from './db/connectMongoDB.js'; // Функция подключения к базе данных
-import { loggerMiddleware } from './middleware/logger.js'; // Middleware логгера pino-http
-import { notFoundHandler } from './middleware/notFoundHandler.js'; // Middleware обработки 404
-import { errorHandler } from './middleware/errorHandler.js'; // Глобальный обработчик ошибок
-import notesRouter from './routes/notesRoutes.js'; // Роутер со всеми путями /notes
+import express from 'express';
+import cors from 'cors';
+import { errors } from 'celebrate';
+import notesRouter from './routes/notesRoutes.js';
+import errorHandler from './middleware/errorHandler.js';
+import notFoundHandler from './middleware/notFoundHandler.js';
+import { connectMongoDB } from './db/connectMongoDB.js'; // перевірте вашу назву імпорту підключення БД
 
-export const startServer = async () => {
-  const app = express();
+const app = express();
+const PORT = process.env.PORT || 3030;
 
-  // 2. Инициализация соединения с MongoDB строго до запуска сервера
-  await connectMongoDB();
+app.use(cors());
+app.use(express.json());
 
-  // 3. Подключение стандартных и логгирующих middleware
-  app.use(cors()); // Разрешение кросс-доменных запросов
-  app.use(express.json()); // Парсинг входящего JSON в req.body
-  app.use(loggerMiddleware); // Логирование каждого HTTP-запроса через pino-http
+// Маршрути додатка
+app.use('/notes', notesRouter);
 
-  // Корневой маршрут (Health Check) — нужен, чтобы внешние сервисы и тесты (testIfServerIsUp)
-  // при запросе на базовый URL не получали ошибку 404, а видели статус 200 OK.
-  app.get('/', (req, res) => {
-    res.status(200).json({
-      status: 200,
-      message: 'Server is up and running!',
+// Обробка неіснуючих маршрутів (404)
+app.use(notFoundHandler);
+
+// Обов'язковий збирач помилок Celebrate валідації (повертає клієнту статус 400 у форматі JSON)
+app.use(errors());
+
+// Глобальний обробник помилок (500 або кастомні http-errors)
+app.use(errorHandler);
+
+// Підключення до БД та старт сервера
+const startServer = async () => {
+  try {
+    await connectMongoDB();
+    console.log('Database connection successful');
+    app.listen(PORT, () => {
+      console.log(`Server running. Use our API on port: ${PORT}`);
     });
-  });
-
-  // 4. Регистрация маршрутов для работы с коллекцией заметок
-  // (Тестовый маршрут /test-error из прошлого ДЗ успешно удален)
-  app.use(notesRouter);
-
-  // 6. Добавление middleware notFoundHandler строго ПОСЛЕ всех существующих маршрутов
-  app.use(notFoundHandler);
-
-  // 7. Добавление errorHandler как самого последнего middleware в стеке
-  app.use(errorHandler);
-
-  // 5. Запуск прослушивания порта сервером
-  const PORT = Number(process.env.PORT) || 3000;
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-  });
+  } catch (error) {
+    console.error(`Database connection error: ${error.message}`);
+    process.exit(1);
+  }
 };
 
-// Автоматический вызов функции запуска приложения
-startServer().catch((error) => {
-  console.error('Application failed to start:', error);
-});
+startServer();

@@ -1,13 +1,7 @@
-import { isHttpError } from 'http-errors';
-
-export const errorHandler = (error, req, res, next) => {
-  if (isHttpError(error)) {
-    return res.status(error.status).json({
-      message: error.message,
-    });
-  }
-
-  res.status(500).json({
-    message: error.message || 'Internal Server Error',
-  });
+const errorHandler = (err, req, res, next) => {
+  // Якщо помилка прийшла від http-errors, вона матиме властивість status
+  const { status = 500, message = 'Internal Server Error' } = err;
+  res.status(status).json({ message });
 };
+
+export default errorHandler;
