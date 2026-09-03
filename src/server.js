@@ -4,21 +4,26 @@ import { errors } from 'celebrate';
 import notesRouter from './routes/notesRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
 import notFoundHandler from './middleware/notFoundHandler.js';
-import { connectMongoDB } from './db/connectMongoDB.js'; // перевірте вашу назву імпорту підключення БД
+import logger from './middleware/logger.js';
+import { connectMongoDB } from './db/connectMongoDB.js';
 
 const app = express();
-const PORT = process.env.PORT || 3030;
+const PORT = process.env.PORT || 3000;
 
+// Базові мідлвари
 app.use(cors());
 app.use(express.json());
 
-// Маршрути додатка
-app.use('/notes', notesRouter);
+// 2. ЗАСТОСОВУЄМО мідлвар логування до Express-додатку
+app.use(logger);
+
+// 3. РЕЄСТРУЄМО роутер БЕЗ префікса шляху
+app.use(notesRouter);
 
 // Обробка неіснуючих маршрутів (404)
 app.use(notFoundHandler);
 
-// Обов'язковий збирач помилок Celebrate валідації (повертає клієнту статус 400 у форматі JSON)
+// Обов'язковий збирач помилок Celebrate валідації (400)
 app.use(errors());
 
 // Глобальний обробник помилок (500 або кастомні http-errors)

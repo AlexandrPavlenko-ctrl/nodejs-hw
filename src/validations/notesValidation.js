@@ -2,7 +2,7 @@ import { Joi } from 'celebrate';
 import mongoose from 'mongoose';
 import { TAGS } from '../constants/tags.js';
 
-// Кастомна функція валідації для Mongoose ObjectId
+// функція валідації
 const isValidObjectId = (value, helpers) => {
   if (!mongoose.Types.ObjectId.isValid(value)) {
     return helpers.message('Невалідний ідентифікатор нотатки (noteId)');
@@ -27,29 +27,25 @@ export const noteIdSchema = {
   }),
 };
 
-// POST /notes
 export const createNoteSchema = {
   body: Joi.object({
     title: Joi.string().min(1).required().messages({
       'any.required': 'Поле "title" є обовʼязковим',
-      'string.min': 'Заголовок повинен містити мінімум 1 символ',
     }),
     content: Joi.string().allow('').optional(),
-    tag: Joi.string().valid(...TAGS).optional(),
+    tag: Joi.string().valid(...TAGS).optional(), // Замість tags тепер одиночний tag
   }),
 };
 
 // PATCH /notes/:noteId
 export const updateNoteSchema = {
-  params: Joi.object({
-    noteId: Joi.string().custom(isValidObjectId).required(),
-  }),
+  params: noteIdSchema.params,
   body: Joi.object({
     title: Joi.string().min(1).optional(),
     content: Joi.string().allow('').optional(),
-    tag: Joi.string().valid(...TAGS).optional(),
+    tag: Joi.string().valid(...TAGS).optional(), // Замість tags тепер одиночний tag
   })
-    .min(1) // Перевірка, що тіло запиту не порожнє
+    .min(1)
     .messages({
       'object.min': 'Тіло запиту не може бути порожнім. Надішліть хоча б одне поле для оновлення: title, content або tag',
     }),

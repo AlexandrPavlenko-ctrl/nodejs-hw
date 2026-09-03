@@ -6,22 +6,33 @@ export const getAllNotes = async (req, res, next) => {
     const { page, perPage, tag, search } = req.query;
     const skip = (page - 1) * perPage;
 
-    const filter = {};
+    // Ініціалізуємо базові Mongoose-запити для чейнінгу
+    const notesQuery = Note.find();
+    const countQuery = Note.countDocuments();
 
+    // Застосовуємо чейнінг методів для фільтрації за тегом
     if (tag) {
-      filter.tags = tag;
+      notesQuery.where('tag').equals(tag);
+      countQuery.where('tag').equals(tag);
     }
 
+    // Застосовуємо чейнінг методів для текстового пошуку через $regex
     if (search) {
-      // Текстовий пошук за регулярним виразом ($regex) регистронезалежно ('i')
-      filter.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
-      ];
+      const searchFilter = {
+        $or: [
+          { title: { $regex: search, $options: 'i' } },
+          { content: { $regex: search, $options: 'i' } },
+        ],
+      };
+      notesQuery.where(searchFilter);
+      countQuery.where(searchFilter);
     }
 
-    const notes = await Note.find(filter).skip(skip).limit(perPage);
-    const totalNotes = await Note.countDocuments(filter);
+    // Додаємо пагінацію до запиту списку
+    notesQuery.skip(skip).limit(perPage);
+
+    // Одночасне виконання запитів нотаток та лічильника через Promise.all
+    const [notes, totalNotes] = await Promise.all([notesQuery, countQuery]);
     const totalPages = Math.ceil(totalNotes / perPage);
 
     res.status(200).json({
@@ -29,7 +40,7 @@ export const getAllNotes = async (req, res, next) => {
       perPage,
       totalNotes,
       totalPages,
-      notes
+      notes,
     });
   } catch (error) {
     next(error);
@@ -63,7 +74,13 @@ export const createNote = async (req, res, next) => {
 export const updateNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
-    const result = await Note.findByIdAndUpdate(noteId, req.body, { new: true, runValidators: true });
+
+    // Використовуємо опцію returnDocument: 'after'
+    const result = await Note.findByIdAndUpdate(
+      noteId,
+      req.body,
+      { returnDocument: 'after', runValidators: true }
+    );
 
     if (!result) {
       return next(createError(404, `Нотатку з ID ${noteId} не знайдено`));
@@ -84,7 +101,8 @@ export const deleteNote = async (req, res, next) => {
       return next(createError(404, `Нотатку з ID ${noteId} не знайдено`));
     }
 
-    res.status(200).json({ message: 'Нотатку успішно видалено' });
+    // Повертаємо об'єкт видаленої нотатки
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }
