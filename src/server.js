@@ -1,11 +1,11 @@
-import 'dotenv/config'; 
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { errors } from 'celebrate';
 import notesRouter from './routes/notesRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
 import notFoundHandler from './middleware/notFoundHandler.js';
-import { logger } from './middleware/logger.js'; // Використовуємо варіант імпорту з минулого кроку
+import logger from './middleware/logger.js';
 import { connectMongoDB } from './db/connectMongoDB.js';
 
 const app = express();

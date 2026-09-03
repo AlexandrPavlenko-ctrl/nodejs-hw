@@ -15,9 +15,7 @@ export const getAllNotesSchema = {
   query: Joi.object({
     page: Joi.number().integer().min(1).default(1),
     perPage: Joi.number().integer().min(5).max(20).default(10),
-    // tag: має бути або одним із дійсних тегів, або взагалі відсутнім (без порожніх рядків та null)
     tag: Joi.string().valid(...TAGS).optional(),
-    // search: має бути рядком, допустимо передавати порожній рядок "" (без null)
     search: Joi.string().allow('').optional(),
   }),
 };
