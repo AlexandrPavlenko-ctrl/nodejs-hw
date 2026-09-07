@@ -1,6 +1,7 @@
-import express from 'express';
+import { Router } from 'express'; // Імпортуємо Router
 import { celebrate } from 'celebrate';
 import * as notesController from '../controllers/notesController.js';
+import { authenticate } from '../middleware/authenticate.js'; // Імпортуємо мідлвар захисту
 import {
   getAllNotesSchema,
   noteIdSchema,
@@ -8,12 +9,42 @@ import {
   updateNoteSchema
 } from '../validations/notesValidation.js';
 
-const router = express.Router();
+const router = Router();
 
-router.get('/notes', celebrate(getAllNotesSchema), notesController.getAllNotes);
-router.get('/notes/:noteId', celebrate(noteIdSchema), notesController.getNoteById);
-router.post('/notes', celebrate(createNoteSchema), notesController.createNote);
-router.patch('/notes/:noteId', celebrate(updateNoteSchema), notesController.updateNote);
-router.delete('/notes/:noteId', celebrate(noteIdSchema), notesController.deleteNote);
+// Явно додаємо authenticate другим аргументом у кожен маршрут перед celebrate
+router.get(
+  '/notes',
+  authenticate,
+  celebrate(getAllNotesSchema),
+  notesController.getAllNotes
+);
+
+router.get(
+  '/notes/:noteId',
+  authenticate,
+  celebrate(noteIdSchema),
+  notesController.getNoteById
+);
+
+router.post(
+  '/notes',
+  authenticate,
+  celebrate(createNoteSchema),
+  notesController.createNote
+);
+
+router.patch(
+  '/notes/:noteId',
+  authenticate,
+  celebrate(updateNoteSchema),
+  notesController.updateNote
+);
+
+router.delete(
+  '/notes/:noteId',
+  authenticate,
+  celebrate(noteIdSchema),
+  notesController.deleteNote
+);
 
 export default router;
