@@ -1,30 +1,20 @@
 import { Schema, model } from 'mongoose';
-import bcrypt from 'bcrypt';
 
 const userSchema = new Schema(
   {
-    username: {
+    username: { type: String, required: false, trim: true },
+    email: { type: String, required: [true, 'Email є обовʼязковим полем'], unique: true, trim: true, lowercase: true },
+    password: { type: String, required: [true, 'Пароль є обовʼязковим полем'], minlength: [8, 'Мінімум 8 символів'] },
+    avatar: {
       type: String,
       required: false,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: [true, 'Email є обовʼязковим полем'],
-      unique: true,
-      trim: true,
-      lowercase: true,
-    },
-    password: {
-      type: String,
-      required: [true, 'Пароль є обовʼязковим полем'],
-      minlength: [8, 'Пароль має містити мінімум 8 символів'],
-    },
+      default: 'https://goit.global' 
+    }
   },
   { versionKey: false, timestamps: true }
 );
 
-// Хук pre('save') для автоматичного встановлення username та хешування пароля
+// Хук pre("save") автоматично встановлює username таким самим, як email
 userSchema.pre('save', async function (next) {
   if (!this.username) {
     this.username = this.email;
@@ -32,12 +22,7 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Метод для порівняння паролів
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
-};
-
-// Метод toJSON для автоматичного видалення пароля з відповіді сервера
+// Налаштування toJSON для автоматичного видалення пароля
 userSchema.set('toJSON', {
   transform: (doc, ret) => {
     delete ret.password;
