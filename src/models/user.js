@@ -8,18 +8,17 @@ const userSchema = new Schema(
     avatar: {
       type: String,
       required: false,
-      default: 'https://goit.global' 
+      default: 'https://goit.global'
     }
   },
   { versionKey: false, timestamps: true }
 );
 
 // Хук pre("save") автоматично встановлює username таким самим, як email
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (!this.username) {
     this.username = this.email;
   }
-  next();
 });
 
 // Налаштування toJSON для автоматичного видалення пароля
