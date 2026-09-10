@@ -1,5 +1,5 @@
 import createHttpError from 'http-errors';
-import jwt from 'jsonwebtoken';  
+import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import handlebars from 'handlebars';
 import fs from 'node:fs/promises';
@@ -142,7 +142,7 @@ export const requestResetEmail = async (req, res, next) => {
     const { email } = req.body;
     const user = await User.findOne({ email });
 
-    // Если email не зарегистрирован — возвращаем 200 (защита от сканирования базы)
+    // Если email не зарегистрирован — возвращаем 200 (задача защиты базы от сканирования)
     if (!user) {
       return res.status(200).json({ message: 'Password reset email sent successfully' });
     }
@@ -156,7 +156,10 @@ export const requestResetEmail = async (req, res, next) => {
 
     const resetLink = `${process.env.FRONTEND_DOMAIN}/reset-password?token=${resetToken}`;
 
-    const templatePath = path.resolve('src', 'templates', 'reset-password-email.html');
+    // Абсолютный путь от корня проекта (гарантирует чтение файла на Render)
+    const templatePath = path.join(process.cwd(), 'src', 'templates', 'reset-password-email.html');
+
+    // Чтение физического файла шаблона, как указано в структуре файлов ТЗ
     const templateSource = await fs.readFile(templatePath, 'utf-8');
     const compileTemplate = handlebars.compile(templateSource);
 
@@ -172,8 +175,8 @@ export const requestResetEmail = async (req, res, next) => {
         subject: 'Reset your password',
         html: htmlBody,
       });
-    } catch {
-      // Если SMTP дал сбой — возвращаем статус 500 по ТЗ
+    } catch (mailError) {
+      console.error('SMTP Error:', mailError); // Выводим ошибку в консоль Render для дебага
       return next(createHttpError(500, 'Failed to send the email, please try again later.'));
     }
 
