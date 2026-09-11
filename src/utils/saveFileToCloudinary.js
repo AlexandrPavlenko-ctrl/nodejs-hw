@@ -15,10 +15,13 @@ export const saveFileToCloudinary = (buffer, userId) => {
       {
         folder: 'avatars',
         public_id: `user-${userId}-${Date.now()}`,
+        resource_type: 'image',
+        overwrite: true,
+        unique_filename: true,
       },
       (error, result) => {
         if (error) return reject(error);
-        resolve(result); // Повертає об’єкт даних завантаженого зображення
+        resolve(result); // Повертає даних завантаженого зображення
       }
     );
 
