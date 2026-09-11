@@ -11,14 +11,18 @@ export const updateUserAvatar = async (req, res, next) => {
     // Завантажуємо буфер з пам'яті через стрим
     const cloudinaryResult = await saveFileToCloudinary(req.file.buffer, req.user._id);
 
-    await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
       { avatar: cloudinaryResult.secure_url },
       { returnDocument: 'after'}
     );
 
+      if (!updatedUser) {
+      return next(createHttpError(404, 'User not found'));
+    }
+
     res.status(200).json({
-      url: cloudinaryResult.secure_url,
+      url: updatedUser.avatar,
     });
   } catch (error) {
     next(error);
